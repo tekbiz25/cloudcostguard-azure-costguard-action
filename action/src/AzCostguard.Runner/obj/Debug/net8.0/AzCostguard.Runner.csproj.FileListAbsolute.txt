@@ -13,3 +13,6 @@ D:\repositories\CloudCostGuard\AzureCostGuard\action\src\AzCostguard.Runner\obj\
 D:\repositories\CloudCostGuard\AzureCostGuard\action\src\AzCostguard.Runner\obj\Debug\net8.0\AzCostguard.Runner.pdb
 D:\repositories\CloudCostGuard\AzureCostGuard\action\src\AzCostguard.Runner\obj\Debug\net8.0\AzCostguard.Runner.genruntimeconfig.cache
 D:\repositories\CloudCostGuard\AzureCostGuard\action\src\AzCostguard.Runner\obj\Debug\net8.0\ref\AzCostguard.Runner.dll
+D:\repositories\CloudCostGuard\AzureCostGuard\action\src\AzCostguard.Runner\obj\Debug\net8.0\AzCostguard.Runner.csproj.AssemblyReference.cache
+D:\repositories\CloudCostGuard\AzureCostGuard\action\src\AzCostguard.Runner\bin\Debug\net8.0\Octokit.dll
+D:\repositories\CloudCostGuard\AzureCostGuard\action\src\AzCostguard.Runner\obj\Debug\net8.0\AzCostgu.D3CE2A0F.Up2Date
