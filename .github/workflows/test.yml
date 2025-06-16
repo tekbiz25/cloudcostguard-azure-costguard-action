@@ -1,10 +1,19 @@
 name: acg-test
 on: pull_request
+
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ./ # local action
+
+      - name: Run AzureCostGuard Action
+        uses: ./ # local action
         with:
-          diff-path: 'dummy.json' 
+          diff-path: 'dummy.json'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
