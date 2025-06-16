@@ -1,0 +1,14 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\action",
+    "\\action\\src\\AzCostguard.Runner",
+    "\\action\\src\\AzCostguard.Runner\\bin",
+    "\\action\\src\\AzCostguard.Runner\\bin\\Debug",
+    "\\action\\src\\AzCostguard.Runner\\bin\\Release",
+    "\\action\\src\\AzCostguard.Runner\\obj",
+    "\\action\\src\\AzCostguard.Runner\\obj\\Debug",
+    "\\action\\src\\AzCostguard.Runner\\obj\\Release"
+  ],
+  "PreviewInSolutionExplorer": false
+}

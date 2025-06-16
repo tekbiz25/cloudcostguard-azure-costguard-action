@@ -1,0 +1,10 @@
+name: acg-test
+on: pull_request
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./ # local action
+        with:
+          diff-path: 'dummy.json' 

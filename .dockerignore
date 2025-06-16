@@ -1,0 +1,11 @@
+.vs/
+*.user
+*.suo
+*.vsp
+*.vsidx
+*.dbmdl
+*.log
+*.mdf
+*.ldf
+bin/
+obj/ 

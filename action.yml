@@ -1,0 +1,13 @@
+name: 'AzureCostGuard PR Runner'
+description: 'Detects IaC diffs and estimates cost.'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+inputs:
+  diff-path:
+    description: 'Path to diff JSON'
+    required: false
+  apply:
+    description: 'Apply remediation when true'
+    required: false
+    default: 'false' 
