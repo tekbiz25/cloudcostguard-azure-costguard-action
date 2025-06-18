@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y curl && \
     mv ./bicep /usr/local/bin/bicep && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-COPY --from=build /app/runner ./
-COPY --from=build /app/ace ./ace/
+COPY --from=build /app/runner/ ./
+COPY --from=build /app/ace/ ./ace/
 ENV PATH="$PATH:/app/ace"
 ENTRYPOINT ["dotnet", "AzCostguard.Runner.dll"] 
