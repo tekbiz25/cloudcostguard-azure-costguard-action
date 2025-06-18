@@ -1,8 +1,10 @@
 name: 'AzureCostGuard PR Runner'
-description: 'Detects IaC diffs and estimates cost.'
-runs:
-  using: 'docker'
-  image: 'Dockerfile'
+description: 'Detects IaC diffs and estimates Azure costs using Azure Cost Estimator (ACE) for Bicep, ARM, and Terraform files'
+author: 'AzureCostGuard'
+branding:
+  icon: 'dollar-sign'
+  color: 'blue'
+
 inputs:
   diff-path:
     description: 'Path to diff JSON'
@@ -10,4 +12,37 @@ inputs:
   apply:
     description: 'Apply remediation when true'
     required: false
-    default: 'false' 
+    default: 'false'
+  subscription-id:
+    description: 'Azure Subscription ID (can also be set via AZURE_SUBSCRIPTION_ID env var)'
+    required: false
+  location:
+    description: 'Azure region for cost estimation (default: eastus)'
+    required: false
+    default: 'eastus'
+  terraform-executable:
+    description: 'Path to Terraform executable (default: searches in PATH)'
+    required: false
+  deep-scan:
+    description: 'Set true to call Azure What-If for drift detection and live validation'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  
+# Two Operation Modes:
+# 1. MVP (Default) - Diff-only mode: Fast € estimate from catalog, no Azure credentials needed
+# 2. Enhanced Scan - Drift detection + What-If validation, requires Service Principal
+
+# For Enhanced Scan, set these Environment Variables (via GitHub Secrets):
+# AZURE_CLIENT_ID - Service Principal Application ID
+# AZURE_CLIENT_SECRET - Service Principal Secret  
+# AZURE_TENANT_ID - Azure AD Tenant ID
+# AZURE_SUBSCRIPTION_ID - Azure Subscription ID (or use subscription-id input)
+
+# Supported File Types:
+# - Bicep files (.bicep)
+# - ARM templates (.json)
+# - Terraform files (.tf)

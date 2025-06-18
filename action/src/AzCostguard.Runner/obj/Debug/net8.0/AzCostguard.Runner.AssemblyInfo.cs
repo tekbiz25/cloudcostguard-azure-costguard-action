@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AzCostguard.Runner")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ae1c85ca58628043ca8a6c741f15951a418ae221")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+abdbca93b52ff6679b03fae1ae718920439b57e9")]
 [assembly: System.Reflection.AssemblyProductAttribute("AzCostguard.Runner")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AzCostguard.Runner")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

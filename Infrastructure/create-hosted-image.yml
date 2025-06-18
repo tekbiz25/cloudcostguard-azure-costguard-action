@@ -1,0 +1,77 @@
+# Pipeline to build and push Azure Cost Guard Docker image to Docker Hub
+# Run this once to create your hosted image that others can use
+
+trigger: none  # Manual trigger only
+
+pool:
+  name: Default  # Your self-hosted agent
+
+variables:
+  dockerUsername: 'tekbiz25'  # Change to your Docker Hub username
+  imageName: 'azure-cost-guard'
+  imageTag: 'latest'
+
+stages:
+- stage: BuildAndPush
+  displayName: 'Build & Push Docker Image'
+  jobs:
+  - job: BuildImage
+    displayName: 'Build Azure Cost Guard Image'
+    steps:
+    - checkout: none
+    
+    - task: AzureCLI@2
+      displayName: 'Clone and Build Azure Cost Guard'
+      inputs:
+        azureSubscription: $(azureServiceConnection)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          echo "Building Azure Cost Guard Docker image for hosting..."
+          
+          # Clone the Azure Cost Guard repository
+          git clone https://github.com/tekbiz25/CloudCostGuard.git azure-cost-guard-source
+          cd azure-cost-guard-source/AzureCostGuard
+          git submodule update --init --recursive
+          
+          # Build the Docker image with proper tag
+          FULL_IMAGE_NAME="$(dockerUsername)/$(imageName):$(imageTag)"
+          echo "Building image: $FULL_IMAGE_NAME"
+          docker build -t $FULL_IMAGE_NAME .
+          
+          # Also tag as 'main' for compatibility
+          docker tag $FULL_IMAGE_NAME $(dockerUsername)/$(imageName):main
+          
+          echo "✅ Docker image built successfully"
+          docker images | grep $(imageName)
+    
+    - task: Docker@2
+      displayName: 'Push to Docker Hub'
+      inputs:
+        containerRegistry: 'DockerHubConnection'  # Create this service connection in Azure DevOps
+        repository: '$(dockerUsername)/$(imageName)'
+        command: 'push'
+        tags: |
+          latest
+          main
+    
+    - task: AzureCLI@2
+      displayName: 'Verify Published Image'
+      inputs:
+        azureSubscription: $(azureServiceConnection)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          echo "🎉 Azure Cost Guard Docker image published successfully!"
+          echo ""
+          echo "Your image is now available at:"
+          echo "  - $(dockerUsername)/$(imageName):latest"
+          echo "  - $(dockerUsername)/$(imageName):main"
+          echo ""
+          echo "Others can now use your image in their pipelines:"
+          echo "docker run --rm $(dockerUsername)/$(imageName):latest"
+          echo ""
+          echo "To use in Azure DevOps pipelines, replace:"
+          echo "  tekbiz25/cloudcostguard-azure-costguard-action:main"
+          echo "With:"
+          echo "  $(dockerUsername)/$(imageName):main" 
