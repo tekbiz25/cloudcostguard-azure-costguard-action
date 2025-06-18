@@ -3,10 +3,6 @@ using System.IO;
 using System.Text.Json;
 using Octokit;
 
-using System.IO;
-using System.Text.Json;
-using Octokit;
-
 Console.WriteLine("AzureCostGuard runner started.");
 Console.WriteLine($"Args: {string.Join(' ', args)}");
 
