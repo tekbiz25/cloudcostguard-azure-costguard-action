@@ -18,8 +18,8 @@ public static class AceWrapper
         {
             var p = Process.Start(new ProcessStartInfo
             {
-                FileName = "ace",
-                Arguments = $"estimate --file {f} --format json",
+                FileName = "azure-cost-estimator",
+                Arguments = $"sub {f} 00000000-0000-0000-0000-000000000000 eastus --generate-json-output --stdout",
                 RedirectStandardOutput = true
             });
             var output = await p.StandardOutput.ReadToEndAsync();
