@@ -1,5 +1,5 @@
 name: 'AzureCostGuard PR Runner'
-description: 'Detects IaC diffs and estimates Azure costs using Azure Cost Estimator (ACE)'
+description: 'Detects IaC diffs and estimates Azure costs using Azure Cost Estimator (ACE) for Bicep, ARM, and Terraform files'
 author: 'AzureCostGuard'
 branding:
   icon: 'dollar-sign'
@@ -20,6 +20,9 @@ inputs:
     description: 'Azure region for cost estimation (default: eastus)'
     required: false
     default: 'eastus'
+  terraform-executable:
+    description: 'Path to Terraform executable (default: searches in PATH)'
+    required: false
 
 runs:
   using: 'docker'
@@ -29,4 +32,9 @@ runs:
 # AZURE_CLIENT_ID - Service Principal Application ID
 # AZURE_CLIENT_SECRET - Service Principal Secret
 # AZURE_TENANT_ID - Azure AD Tenant ID
-# AZURE_SUBSCRIPTION_ID - Azure Subscription ID (or use subscription-id input) 
+# AZURE_SUBSCRIPTION_ID - Azure Subscription ID (or use subscription-id input)
+
+# Supported File Types:
+# - Bicep files (.bicep)
+# - ARM templates (.json)
+# - Terraform files (.tf) 

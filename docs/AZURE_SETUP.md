@@ -130,7 +130,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Test Azure Cost Guard
-        uses: your-org/azure-cost-guard-action@v1
+        uses: tekbiz25/cloudcostguard-azure-costguard-action@v1
         env:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}

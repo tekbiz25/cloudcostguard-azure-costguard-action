@@ -1,17 +1,20 @@
 # Azure Cost Guard GitHub Action
 
-A GitHub Action that automatically estimates Azure infrastructure costs for Pull Requests containing Bicep or ARM templates. This action integrates with the [Azure Cost Estimator (ACE)](https://github.com/TheCloudTheory/arm-estimator) to provide cost insights before infrastructure changes are deployed.
+A GitHub Action that automatically estimates Azure infrastructure costs for Pull Requests containing Bicep, ARM templates, or Terraform files. This action integrates with the [Azure Cost Estimator (ACE)](https://github.com/TheCloudTheory/arm-estimator) to provide cost insights before infrastructure changes are deployed.
 
 ## Features
 
-- 🔍 **Automatic Detection**: Scans PR changes for Bicep (`.bicep`) and ARM template (`.json`) files
+- 🔍 **Automatic Detection**: Scans PR changes for Bicep (`.bicep`), ARM template (`.json`), and Terraform (`.tf`) files
 - 💰 **Cost Estimation**: Provides monthly cost estimates for Azure resources
 - 🔐 **Secure Authentication**: Uses Azure Service Principal for secure access
 - 📊 **Detailed Reports**: Shows cost breakdown by service and resource
 - ⚡ **Fast Execution**: Runs in Docker container for consistent performance
 - 🌍 **Multi-tenant Support**: Works across different Azure subscriptions and tenants
+- 🛠️ **Multi-IaC Support**: Works with Bicep, ARM templates, and Terraform
 
 ## Quick Start
+
+> 🚀 **New to Azure Cost Guard?** Check out our [5-minute Quick Start Guide](docs/QUICKSTART.md) for copy-paste examples!
 
 ### 1. Add to Your Workflow
 
@@ -32,7 +35,7 @@ jobs:
         uses: actions/checkout@v4
         
       - name: Azure Cost Guard
-        uses: your-org/azure-cost-guard-action@v1
+        uses: tekbiz25/cloudcostguard-azure-costguard-action@v1
         env:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -97,6 +100,7 @@ The service principal needs these minimum permissions:
 |-------|-------------|----------|---------|
 | `subscription-id` | Azure Subscription ID | No* | Uses `AZURE_SUBSCRIPTION_ID` env var |
 | `location` | Azure region for cost estimation | No | `eastus` |
+| `terraform-executable` | Path to Terraform executable | No | Searches in PATH |
 | `diff-path` | Path to diff JSON | No | Auto-detected |
 | `apply` | Apply remediation when true | No | `false` |
 
@@ -119,7 +123,7 @@ The service principal needs these minimum permissions:
 
 ```yaml
 - name: Azure Cost Guard
-  uses: your-org/azure-cost-guard-action@v1
+  uses: tekbiz25/cloudcostguard-azure-costguard-action@v1
   env:
     AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
     AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -135,7 +139,7 @@ For organizations with multiple subscriptions, you can set up different secrets 
 
 ```yaml
 - name: Azure Cost Guard - Production
-  uses: your-org/azure-cost-guard-action@v1
+  uses: tekbiz25/cloudcostguard-azure-costguard-action@v1
   env:
     AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
     AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -157,6 +161,7 @@ on:
       - 'infrastructure/**'
       - '**/*.bicep'
       - '**/*.json'
+      - '**/*.tf'
 
 jobs:
   cost-estimation:
@@ -164,7 +169,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Azure Cost Guard
-        uses: your-org/azure-cost-guard-action@v1
+        uses: tekbiz25/cloudcostguard-azure-costguard-action@v1
         env:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -197,10 +202,12 @@ Top 5 most expensive resources:
 
 - **Bicep files** (`.bicep`)
 - **ARM templates** (`.json`)
+- **Terraform files** (`.tf`)
 
 Files in these locations are automatically excluded:
 - `.github/` directories
 - `node_modules/` directories
+- `.terraform/` directories
 
 ## Troubleshooting
 
@@ -239,6 +246,27 @@ Error: Insufficient privileges to complete the operation
 
 **Solution**: Grant the service principal additional permissions or contact your Azure administrator.
 
+### Terraform Issues
+
+```
+azure-cost-estimator failed for main.tf
+```
+
+**Common Solutions**:
+1. **Terraform not installed**: Ensure Terraform is installed in the environment
+2. **Missing terraform init**: Run `terraform init` in directories with .tf files
+3. **Provider configuration**: Ensure all required Terraform providers are properly configured
+4. **Custom Terraform path**: Use the `terraform-executable` input if Terraform isn't in PATH
+5. **State file issues**: Ensure Terraform state is properly initialized
+
+Example with custom Terraform path:
+```yaml
+- name: Azure Cost Guard
+  uses: tekbiz25/cloudcostguard-azure-costguard-action@v1
+  with:
+    terraform-executable: '/custom/path/to/terraform'
+```
+
 ## Security Considerations
 
 - **Principle of Least Privilege**: The service principal only has Reader access
@@ -261,9 +289,9 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Support
 
-- 📚 [Documentation](https://github.com/your-org/azure-cost-guard-action/wiki)
-- 🐛 [Report Issues](https://github.com/your-org/azure-cost-guard-action/issues)
-- 💬 [Discussions](https://github.com/your-org/azure-cost-guard-action/discussions)
+- 📚 [Documentation](https://github.com/tekbiz25/cloudcostguard-azure-costguard-action/wiki)
+- 🐛 [Report Issues](https://github.com/tekbiz25/cloudcostguard-azure-costguard-action/issues)
+- 💬 [Discussions](https://github.com/tekbiz25/cloudcostguard-azure-costguard-action/discussions)
 
 ## Related Projects
 

@@ -15,6 +15,7 @@ var githubToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
 var subscriptionId = Environment.GetEnvironmentVariable("AZURE_SUBSCRIPTION_ID") 
                     ?? Environment.GetEnvironmentVariable("INPUT_SUBSCRIPTION-ID");
 var location = Environment.GetEnvironmentVariable("INPUT_LOCATION") ?? "eastus";
+var terraformExecutable = Environment.GetEnvironmentVariable("INPUT_TERRAFORM-EXECUTABLE");
 
 if (string.IsNullOrEmpty(repo))
 {
@@ -87,8 +88,8 @@ try
     
     // Filter extensions and save result
     var changed = files.Select(f => f.FileName)
-        .Where(f => f.EndsWith(".bicep") || f.EndsWith(".json"))
-        .Where(f => !f.Contains("/.github/") && !f.Contains("/node_modules/"))
+        .Where(f => f.EndsWith(".bicep") || f.EndsWith(".json") || f.EndsWith(".tf"))
+        .Where(f => !f.Contains("/.github/") && !f.Contains("/node_modules/") && !f.Contains("/.terraform/"))
         .ToList();
     
     Console.WriteLine($"Found {changed.Count} IaC files in PR.");
@@ -96,7 +97,9 @@ try
     Console.WriteLine($"\nFiltered IaC files ({changed.Count}):");
     foreach (var iacFile in changed)
     {
-        Console.WriteLine($"- {iacFile}");
+        var fileType = iacFile.EndsWith(".bicep") ? "Bicep" : 
+                      iacFile.EndsWith(".tf") ? "Terraform" : "ARM/JSON";
+        Console.WriteLine($"- {iacFile} ({fileType})");
     }
     
     if (!changed.Any())
@@ -110,7 +113,7 @@ try
 
     // Estimate costs using ACE
     Console.WriteLine("\n=== Starting Azure Cost Estimation ===");
-    var cost = await AceWrapper.EstimateAsync(changed, subscriptionId, location);
+    var cost = await AceWrapper.EstimateAsync(changed, subscriptionId, location, terraformExecutable);
     
     var opts = new JsonSerializerOptions { WriteIndented = true };
     await File.WriteAllTextAsync("cost.json", JsonSerializer.Serialize(cost, opts));

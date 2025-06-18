@@ -8,6 +8,7 @@ on:
     paths:
       - '**/*.bicep'
       - '**/*.json'
+      - '**/*.tf'
       - 'infrastructure/**'
 
 jobs:
@@ -25,9 +26,8 @@ jobs:
         with:
           fetch-depth: 0  # Get full history for better diff analysis
       
-      # Replace 'your-org' with the actual GitHub organization/user name
       - name: Azure Cost Guard
-        uses: your-org/azure-cost-guard-action@v1
+        uses: tekbiz25/cloudcostguard-azure-costguard-action@v1
         env:
           # Required: Azure Service Principal credentials
           # Set these as repository secrets in GitHub Settings > Secrets and variables > Actions
@@ -38,6 +38,8 @@ jobs:
         with:
           # Optional: Azure region for cost estimation (default: eastus)
           location: 'eastus'
+          # Optional: Path to Terraform executable (default: searches in PATH)
+          # terraform-executable: '/usr/local/bin/terraform'
           
       # Optional: Upload cost report as artifact for download
       - name: Upload cost report

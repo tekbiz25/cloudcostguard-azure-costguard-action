@@ -11,7 +11,7 @@ public class CostItem
 
 public static class AceWrapper
 {
-    public static async Task<List<CostItem>> EstimateAsync(IEnumerable<string> files, string subscriptionId, string location = "eastus")
+    public static async Task<List<CostItem>> EstimateAsync(IEnumerable<string> files, string subscriptionId, string location = "eastus", string? terraformExecutable = null)
     {
         // Validate Azure authentication environment variables
         ValidateAzureAuthentication();
@@ -24,10 +24,18 @@ public static class AceWrapper
             
             try
             {
+                var arguments = $"sub \"{file}\" {subscriptionId} {location} --generate-json-output --stdout";
+                
+                // Add Terraform executable option if specified and file is a Terraform file
+                if (!string.IsNullOrEmpty(terraformExecutable) && file.EndsWith(".tf"))
+                {
+                    arguments += $" --tf-executable \"{terraformExecutable}\"";
+                }
+                
                 var processInfo = new ProcessStartInfo
                 {
                     FileName = "azure-cost-estimator",
-                    Arguments = $"sub \"{file}\" {subscriptionId} {location} --generate-json-output --stdout",
+                    Arguments = arguments,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -51,6 +59,19 @@ public static class AceWrapper
                     Console.WriteLine($"azure-cost-estimator failed for {file}:");
                     Console.WriteLine($"Exit code: {process.ExitCode}");
                     Console.WriteLine($"Error: {error}");
+                    
+                    // For Terraform files, provide additional troubleshooting info
+                    if (file.EndsWith(".tf"))
+                    {
+                        Console.WriteLine("Terraform troubleshooting:");
+                        Console.WriteLine("- Ensure Terraform is installed and accessible");
+                        Console.WriteLine("- Run 'terraform init' in the directory containing .tf files");
+                        Console.WriteLine("- Make sure all required Terraform providers are configured");
+                        if (string.IsNullOrEmpty(terraformExecutable))
+                        {
+                            Console.WriteLine("- Consider specifying terraform-executable input if Terraform is not in PATH");
+                        }
+                    }
                     continue;
                 }
 
@@ -117,7 +138,7 @@ public static class AceWrapper
             var errorMessage = "Missing required Azure authentication environment variables:\n" +
                               string.Join("\n", missing.Select(m => $"  - {m}")) +
                               "\n\nPlease set these as GitHub Secrets in your repository." +
-                              "\nSee documentation: https://github.com/your-org/azure-cost-guard-action#setup";
+                              "\nSee documentation: https://github.com/tekbiz25/cloudcostguard-azure-costguard-action#setup";
             
             throw new InvalidOperationException(errorMessage);
         }
