@@ -20,4 +20,4 @@ RUN apt-get update && apt-get install -y curl && \
 COPY --from=build /app/runner/ ./
 COPY --from=build /app/ace/ ./ace/
 ENV PATH="$PATH:/app/ace"
-ENTRYPOINT ["dotnet", "AzCostguard.Runner.dll"] 
+ENTRYPOINT ["./AzCostguard.Runner"] 
