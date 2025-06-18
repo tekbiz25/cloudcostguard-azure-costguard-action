@@ -11,11 +11,28 @@ var repo = Environment.GetEnvironmentVariable("GITHUB_REPOSITORY");
 var eventPath = Environment.GetEnvironmentVariable("GITHUB_EVENT_PATH");
 var githubToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
 
-// Parse Azure configuration
+// Parse Action inputs
+var deepScan = Environment.GetEnvironmentVariable("INPUT_DEEP-SCAN")?.ToLowerInvariant() == "true";
 var subscriptionId = Environment.GetEnvironmentVariable("AZURE_SUBSCRIPTION_ID") 
                     ?? Environment.GetEnvironmentVariable("INPUT_SUBSCRIPTION-ID");
 var location = Environment.GetEnvironmentVariable("INPUT_LOCATION") ?? "eastus";
 var terraformExecutable = Environment.GetEnvironmentVariable("INPUT_TERRAFORM-EXECUTABLE");
+
+Console.WriteLine($"Mode: {(deepScan ? "Enhanced Scan (What-If enabled)" : "MVP Diff-only (catalog pricing)")}");
+
+// Handle two-mode system
+if (!deepScan)
+{
+    // MVP Mode: Use fictitious subscription ID to skip What-If calls
+    subscriptionId = Environment.GetEnvironmentVariable("AZCG_SUBSCRIPTION") 
+                    ?? "00000000-0000-0000-0000-000000000000";
+    location = Environment.GetEnvironmentVariable("AZCG_LOCATION") ?? location;
+    Console.WriteLine("MVP Mode: Using catalog pricing without Azure What-If validation");
+}
+else
+{
+    Console.WriteLine("Enhanced Scan Mode: Will perform What-If validation and drift detection");
+}
 
 if (string.IsNullOrEmpty(repo))
 {
@@ -55,7 +72,7 @@ if (!File.Exists(eventPath))
     return;
 }
 
-// Validate Azure subscription ID
+// Validate subscription ID (always required, even in MVP mode)
 if (string.IsNullOrEmpty(subscriptionId))
 {
     Console.WriteLine("Error: Azure Subscription ID is required. Set AZURE_SUBSCRIPTION_ID environment variable or use the subscription-id input.");
@@ -113,7 +130,7 @@ try
 
     // Estimate costs using ACE
     Console.WriteLine("\n=== Starting Azure Cost Estimation ===");
-    var cost = await AceWrapper.EstimateAsync(changed, subscriptionId, location, terraformExecutable);
+    var cost = await AceWrapper.EstimateAsync(changed, subscriptionId, location, terraformExecutable, deepScan);
     
     var opts = new JsonSerializerOptions { WriteIndented = true };
     await File.WriteAllTextAsync("cost.json", JsonSerializer.Serialize(cost, opts));

@@ -14,9 +14,9 @@ A GitHub Action that automatically estimates Azure infrastructure costs for Pull
 
 ## Quick Start
 
-> 🚀 **New to Azure Cost Guard?** Check out our [5-minute Quick Start Guide](docs/QUICKSTART.md) for copy-paste examples!
+> 🚀 **Get started in 30 seconds!** MVP mode requires no Azure credentials - just add the workflow and go!
 
-### 1. Add to Your Workflow
+### 1. Add to Your Workflow (MVP Mode - Default)
 
 Create `.github/workflows/cost-check.yml`:
 
@@ -34,22 +34,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         
-      - name: Azure Cost Guard
+      - name: Azure Cost Guard (MVP Mode)
         uses: tekbiz25/cloudcostguard-azure-costguard-action@v1
-        env:
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         with:
           location: 'eastus'
 ```
 
-### 2. Set Up Azure Authentication
+**That's it!** MVP mode provides fast cost estimates using Microsoft's pricing catalog without requiring any Azure credentials.
 
-Follow the [Azure Setup Guide](#azure-setup-guide) below to configure authentication.
+### 2. Optional: Enhanced Features
 
-## Azure Setup Guide
+For drift detection and What-If validation, see the [Deep Scan Mode](#optional-deep-scan-mode) section below.
+
+## Azure Setup Guide (Deep Scan Mode Only)
+
+> ℹ️ **Note**: This section is only required for Deep Scan mode. MVP mode works without any Azure credentials.
 
 ### Step 1: Create Azure Service Principal
 
@@ -101,21 +100,82 @@ The service principal needs these minimum permissions:
 | `subscription-id` | Azure Subscription ID | No* | Uses `AZURE_SUBSCRIPTION_ID` env var |
 | `location` | Azure region for cost estimation | No | `eastus` |
 | `terraform-executable` | Path to Terraform executable | No | Searches in PATH |
+| `deep-scan` | Enable What-If validation and drift detection | No | `false` |
 | `diff-path` | Path to diff JSON | No | Auto-detected |
 | `apply` | Apply remediation when true | No | `false` |
 
-*Either input or environment variable required
+*Required for Deep Scan mode, optional for MVP mode
 
 ### Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `AZURE_CLIENT_ID` | Service Principal Application ID | ✅ Yes |
-| `AZURE_CLIENT_SECRET` | Service Principal Secret | ✅ Yes |
-| `AZURE_TENANT_ID` | Azure AD Tenant ID | ✅ Yes |
-| `AZURE_SUBSCRIPTION_ID` | Azure Subscription ID | ✅ Yes* |
+| Variable | Description | MVP Mode | Deep Scan Mode |
+|----------|-------------|----------|----------------|
+| `AZURE_CLIENT_ID` | Service Principal Application ID | ❌ Not needed | ✅ Required |
+| `AZURE_CLIENT_SECRET` | Service Principal Secret | ❌ Not needed | ✅ Required |
+| `AZURE_TENANT_ID` | Azure AD Tenant ID | ❌ Not needed | ✅ Required |
+| `AZURE_SUBSCRIPTION_ID` | Azure Subscription ID | ❌ Optional* | ✅ Required |
 
-*Can be provided via input instead
+*MVP mode uses fictitious subscription ID if not provided
+
+### Optional: Deep Scan Mode
+
+By default, Azure Cost Guard runs in **MVP mode** - providing fast cost estimates from Microsoft's pricing catalog without requiring Azure credentials. This is perfect for getting quick cost insights on PRs.
+
+For enhanced validation including **drift detection** and **live What-If validation**, enable Deep Scan mode:
+
+#### Step 1: Create Azure Service Principal with Enhanced Permissions
+
+```bash
+# Create service principal with Reader + Cost Management Reader roles
+az ad sp create-for-rbac \
+  --name "github-cost-guard-YOUR-REPO-NAME" \
+  --role "Reader" \
+  --scopes "/subscriptions/YOUR-SUBSCRIPTION-ID" \
+  --output json
+
+# Add Cost Management Reader role for enhanced pricing data
+az role assignment create \
+  --assignee YOUR-SERVICE-PRINCIPAL-APP-ID \
+  --role "Cost Management Reader" \
+  --scope "/subscriptions/YOUR-SUBSCRIPTION-ID"
+```
+
+#### Step 2: Add GitHub Repository Secrets
+
+Set these additional secrets for Deep Scan mode:
+
+| Secret Name | Value | Description |
+|-------------|-------|-------------|
+| `AZCG_CLIENT_ID` | Service Principal App ID | For Deep Scan authentication |
+| `AZCG_TENANT_ID` | Azure AD Tenant ID | For Deep Scan authentication |
+| `AZCG_CLIENT_SECRET` | Service Principal Secret | For Deep Scan authentication |
+| `AZCG_SUBSCRIPTION` | Your subscription ID | Target subscription for validation |
+
+#### Step 3: Enable Deep Scan in Workflow
+
+```yaml
+- name: Azure Cost Guard (Deep Scan)
+  uses: tekbiz25/cloudcostguard-azure-costguard-action@v1
+  env:
+    AZURE_CLIENT_ID: ${{ secrets.AZCG_CLIENT_ID }}
+    AZURE_CLIENT_SECRET: ${{ secrets.AZCG_CLIENT_SECRET }}
+    AZURE_TENANT_ID: ${{ secrets.AZCG_TENANT_ID }}
+    AZURE_SUBSCRIPTION_ID: ${{ secrets.AZCG_SUBSCRIPTION }}
+  with:
+    deep-scan: true  # Enable What-If validation
+    location: 'eastus'
+```
+
+#### Deep Scan vs MVP Comparison
+
+| Feature | MVP Mode (Default) | Deep Scan Mode |
+|---------|-------------------|----------------|
+| **Azure Credentials** | ❌ Not needed | ✅ Service Principal required |
+| **API Calls** | ❌ Catalog only | ✅ What-If + Resource Graph |
+| **Speed** | ⚡ Fast | 🐌 Slower (API calls) |
+| **Accuracy** | 📊 Catalog pricing | 🎯 Live validation |
+| **Drift Detection** | ❌ No | ✅ Yes |
+| **Setup Complexity** | 🟢 One-click | 🟡 Requires SPN setup |
 
 ## Advanced Configuration
 

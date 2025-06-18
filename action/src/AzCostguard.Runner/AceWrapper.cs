@@ -11,10 +11,17 @@ public class CostItem
 
 public static class AceWrapper
 {
-    public static async Task<List<CostItem>> EstimateAsync(IEnumerable<string> files, string subscriptionId, string location = "eastus", string? terraformExecutable = null)
+    public static async Task<List<CostItem>> EstimateAsync(IEnumerable<string> files, string subscriptionId, string location = "eastus", string? terraformExecutable = null, bool deepScan = false)
     {
-        // Validate Azure authentication environment variables
-        ValidateAzureAuthentication();
+        // Only validate Azure authentication for deep scan mode
+        if (deepScan)
+        {
+            ValidateAzureAuthentication();
+        }
+        else
+        {
+            Console.WriteLine("MVP Mode: Skipping Azure authentication validation");
+        }
         
         var results = new List<CostItem>();
         
@@ -24,13 +31,26 @@ public static class AceWrapper
             
             try
             {
-                var arguments = $"sub \"{file}\" {subscriptionId} {location} --generate-json-output --stdout";
+                // Build ACE arguments based on mode
+                string arguments;
+                if (deepScan)
+                {
+                    // Enhanced mode: Use standard 'estimate' command with What-If
+                    arguments = $"estimate --file \"{file}\" --sub {subscriptionId} --location {location} --format json";
+                }
+                else
+                {
+                    // MVP mode: Use 'sub' command with fictitious subscription to force diff-only
+                    arguments = $"sub \"{file}\" {subscriptionId} {location} --generate-json-output --stdout";
+                }
                 
                 // Add Terraform executable option if specified and file is a Terraform file
                 if (!string.IsNullOrEmpty(terraformExecutable) && file.EndsWith(".tf"))
                 {
                     arguments += $" --tf-executable \"{terraformExecutable}\"";
                 }
+                
+                Console.WriteLine($"ACE Command: azure-cost-estimator {arguments}");
                 
                 var processInfo = new ProcessStartInfo
                 {
@@ -71,6 +91,13 @@ public static class AceWrapper
                         {
                             Console.WriteLine("- Consider specifying terraform-executable input if Terraform is not in PATH");
                         }
+                    }
+                    
+                    if (!deepScan)
+                    {
+                        Console.WriteLine("MVP Mode troubleshooting:");
+                        Console.WriteLine("- This is normal if the file requires What-If validation");
+                        Console.WriteLine("- Consider enabling deep-scan mode for enhanced validation");
                     }
                     continue;
                 }
@@ -135,14 +162,15 @@ public static class AceWrapper
 
         if (missing.Any())
         {
-            var errorMessage = "Missing required Azure authentication environment variables:\n" +
+            var errorMessage = "Missing required Azure authentication environment variables for Enhanced Scan mode:\n" +
                               string.Join("\n", missing.Select(m => $"  - {m}")) +
-                              "\n\nPlease set these as GitHub Secrets in your repository." +
+                              "\n\nFor Enhanced Scan mode, set these as GitHub Secrets in your repository." +
+                              "\nOr use MVP mode (default) which only requires catalog pricing." +
                               "\nSee documentation: https://github.com/tekbiz25/cloudcostguard-azure-costguard-action#setup";
             
             throw new InvalidOperationException(errorMessage);
         }
 
-        Console.WriteLine("✓ Azure authentication environment variables are configured");
+        Console.WriteLine("✓ Azure authentication environment variables are configured for Enhanced Scan mode");
     }
 } 
