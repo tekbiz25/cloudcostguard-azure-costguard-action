@@ -1,0 +1,41 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "AzCostguard.Runner/1.0.0": {
+        "dependencies": {
+          "Octokit": "9.1.1"
+        },
+        "runtime": {
+          "AzCostguard.Runner.dll": {}
+        }
+      },
+      "Octokit/9.1.1": {
+        "runtime": {
+          "lib/netstandard2.0/Octokit.dll": {
+            "assemblyVersion": "9.1.1.0",
+            "fileVersion": "9.1.1.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "AzCostguard.Runner/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Octokit/9.1.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-I9vbat7rmMnlpcxeTMiLyBrDlb4RC3t94qCkjf0HIjQhrwq+pt3dkwUyYt/Wl+v27WMbc718CJjMFO+Iw1et7g==",
+      "path": "octokit/9.1.1",
+      "hashPath": "octokit.9.1.1.nupkg.sha512"
+    }
+  }
+}

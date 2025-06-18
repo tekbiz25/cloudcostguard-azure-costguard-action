@@ -1,0 +1,14 @@
+[
+  {
+    "ResourceId": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/test-rg/providers/Microsoft.Storage/storageAccounts/stor12345",
+    "Service": "Storage",
+    "Sku": "Standard_LRS",
+    "EurosPerMonth": 18.50
+  },
+  {
+    "ResourceId": "/subscriptions/12345678-1234-1234-1234-123456789012/resourceGroups/test-rg/providers/Microsoft.Storage/storageAccounts/stor12345/fileServices/default",
+    "Service": "Storage",
+    "Sku": "File Storage",
+    "EurosPerMonth": 0.00
+  }
+] 
