@@ -1,8 +1,10 @@
 name: 'AzureCostGuard PR Runner'
-description: 'Detects IaC diffs and estimates cost.'
-runs:
-  using: 'docker'
-  image: 'Dockerfile'
+description: 'Detects IaC diffs and estimates Azure costs using Azure Cost Estimator (ACE)'
+author: 'AzureCostGuard'
+branding:
+  icon: 'dollar-sign'
+  color: 'blue'
+
 inputs:
   diff-path:
     description: 'Path to diff JSON'
@@ -10,4 +12,21 @@ inputs:
   apply:
     description: 'Apply remediation when true'
     required: false
-    default: 'false' 
+    default: 'false'
+  subscription-id:
+    description: 'Azure Subscription ID (can also be set via AZURE_SUBSCRIPTION_ID env var)'
+    required: false
+  location:
+    description: 'Azure region for cost estimation (default: eastus)'
+    required: false
+    default: 'eastus'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  
+# Required Environment Variables (set via GitHub Secrets):
+# AZURE_CLIENT_ID - Service Principal Application ID
+# AZURE_CLIENT_SECRET - Service Principal Secret
+# AZURE_TENANT_ID - Azure AD Tenant ID
+# AZURE_SUBSCRIPTION_ID - Azure Subscription ID (or use subscription-id input) 

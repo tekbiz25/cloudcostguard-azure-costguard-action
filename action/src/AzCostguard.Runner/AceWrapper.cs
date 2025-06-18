@@ -11,30 +11,117 @@ public class CostItem
 
 public static class AceWrapper
 {
-    public static async Task<List<CostItem>> EstimateAsync(IEnumerable<string> files)
+    public static async Task<List<CostItem>> EstimateAsync(IEnumerable<string> files, string subscriptionId, string location = "eastus")
     {
+        // Validate Azure authentication environment variables
+        ValidateAzureAuthentication();
+        
         var results = new List<CostItem>();
-        foreach (var f in files)
+        
+        foreach (var file in files)
         {
-            var p = Process.Start(new ProcessStartInfo
+            Console.WriteLine($"Estimating costs for: {file}");
+            
+            try
             {
-                FileName = "azure-cost-estimator",
-                Arguments = $"sub {f} 00000000-0000-0000-0000-000000000000 eastus --generate-json-output --stdout",
-                RedirectStandardOutput = true
-            });
-            var output = await p.StandardOutput.ReadToEndAsync();
-            var doc = JsonDocument.Parse(output);
-            results.AddRange(doc.RootElement.GetProperty("resources")
-                .EnumerateArray()
-                .Select(x => new CostItem
+                var processInfo = new ProcessStartInfo
                 {
-                    ResourceId = x.GetProperty("id").GetString()!,
-                    Service = x.GetProperty("serviceName").GetString()!,
-                    Sku = x.GetProperty("skuName").GetString()!,
-                    EurosPerMonth = x.GetProperty("monthlyCostEUR").GetDecimal()
-                }));
-            p.WaitForExit();
+                    FileName = "azure-cost-estimator",
+                    Arguments = $"sub \"{file}\" {subscriptionId} {location} --generate-json-output --stdout",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using var process = Process.Start(processInfo);
+                if (process == null)
+                {
+                    Console.WriteLine($"Failed to start azure-cost-estimator process for {file}");
+                    continue;
+                }
+
+                var output = await process.StandardOutput.ReadToEndAsync();
+                var error = await process.StandardError.ReadToEndAsync();
+                
+                await process.WaitForExitAsync();
+
+                if (process.ExitCode != 0)
+                {
+                    Console.WriteLine($"azure-cost-estimator failed for {file}:");
+                    Console.WriteLine($"Exit code: {process.ExitCode}");
+                    Console.WriteLine($"Error: {error}");
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(output))
+                {
+                    Console.WriteLine($"No output from azure-cost-estimator for {file}");
+                    continue;
+                }
+
+                var doc = JsonDocument.Parse(output);
+                if (doc.RootElement.TryGetProperty("resources", out var resourcesProperty))
+                {
+                    var fileResults = resourcesProperty.EnumerateArray()
+                        .Select(x => new CostItem
+                        {
+                            ResourceId = x.GetProperty("id").GetString() ?? "",
+                            Service = x.GetProperty("serviceName").GetString() ?? "",
+                            Sku = x.GetProperty("skuName").GetString() ?? "",
+                            EurosPerMonth = x.GetProperty("monthlyCostEUR").GetDecimal()
+                        });
+                    
+                    results.AddRange(fileResults);
+                    Console.WriteLine($"Found {fileResults.Count()} resources in {file}");
+                }
+                else
+                {
+                    Console.WriteLine($"No resources found in output for {file}");
+                }
+            }
+            catch (JsonException ex)
+            {
+                Console.WriteLine($"Failed to parse JSON output for {file}: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error processing {file}: {ex.Message}");
+            }
         }
+        
         return results;
+    }
+
+    private static void ValidateAzureAuthentication()
+    {
+        var requiredEnvVars = new[]
+        {
+            ("AZURE_CLIENT_ID", "Service Principal Application ID"),
+            ("AZURE_CLIENT_SECRET", "Service Principal Secret"),
+            ("AZURE_TENANT_ID", "Azure AD Tenant ID")
+        };
+
+        var missing = new List<string>();
+
+        foreach (var (envVar, description) in requiredEnvVars)
+        {
+            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(envVar)))
+            {
+                missing.Add($"{envVar} ({description})");
+            }
+        }
+
+        if (missing.Any())
+        {
+            var errorMessage = "Missing required Azure authentication environment variables:\n" +
+                              string.Join("\n", missing.Select(m => $"  - {m}")) +
+                              "\n\nPlease set these as GitHub Secrets in your repository." +
+                              "\nSee documentation: https://github.com/your-org/azure-cost-guard-action#setup";
+            
+            throw new InvalidOperationException(errorMessage);
+        }
+
+        Console.WriteLine("✓ Azure authentication environment variables are configured");
     }
 } 

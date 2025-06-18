@@ -1,0 +1,68 @@
+# Example GitHub Actions workflow for Azure Cost Guard
+# Copy this to .github/workflows/cost-check.yml in your repository
+
+name: Azure Cost Check
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - '**/*.bicep'
+      - '**/*.json'
+      - 'infrastructure/**'
+
+jobs:
+  cost-estimation:
+    runs-on: ubuntu-latest
+    name: Estimate Azure Infrastructure Costs
+    
+    permissions:
+      pull-requests: write  # To post cost comments on PRs
+      contents: read        # To read repository contents
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Get full history for better diff analysis
+      
+      # Replace 'your-org' with the actual GitHub organization/user name
+      - name: Azure Cost Guard
+        uses: your-org/azure-cost-guard-action@v1
+        env:
+          # Required: Azure Service Principal credentials
+          # Set these as repository secrets in GitHub Settings > Secrets and variables > Actions
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        with:
+          # Optional: Azure region for cost estimation (default: eastus)
+          location: 'eastus'
+          
+      # Optional: Upload cost report as artifact for download
+      - name: Upload cost report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: azure-cost-report
+          path: cost.json
+          retention-days: 30
+
+      # Optional: Post cost summary to PR comment
+      # (Uncomment and customize as needed)
+      # - name: Comment PR with cost estimate
+      #   if: github.event_name == 'pull_request'
+      #   uses: actions/github-script@v7
+      #   with:
+      #     script: |
+      #       const fs = require('fs');
+      #       if (fs.existsSync('cost.json')) {
+      #         const cost = JSON.parse(fs.readFileSync('cost.json', 'utf8'));
+      #         const totalCost = cost.reduce((sum, item) => sum + item.EurosPerMonth, 0);
+      #         await github.rest.issues.createComment({
+      #           issue_number: context.issue.number,
+      #           owner: context.repo.owner,
+      #           repo: context.repo.repo,
+      #           body: `💰 **Azure Cost Estimate**\n\nTotal monthly cost: €${totalCost.toFixed(2)}\n\nSee artifacts for detailed breakdown.`
+      #         });
+      #       } 

@@ -11,6 +11,11 @@ var repo = Environment.GetEnvironmentVariable("GITHUB_REPOSITORY");
 var eventPath = Environment.GetEnvironmentVariable("GITHUB_EVENT_PATH");
 var githubToken = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
 
+// Parse Azure configuration
+var subscriptionId = Environment.GetEnvironmentVariable("AZURE_SUBSCRIPTION_ID") 
+                    ?? Environment.GetEnvironmentVariable("INPUT_SUBSCRIPTION-ID");
+var location = Environment.GetEnvironmentVariable("INPUT_LOCATION") ?? "eastus";
+
 if (string.IsNullOrEmpty(repo))
 {
     Console.WriteLine("Warning: GITHUB_REPOSITORY environment variable is not set.");
@@ -49,6 +54,16 @@ if (!File.Exists(eventPath))
     return;
 }
 
+// Validate Azure subscription ID
+if (string.IsNullOrEmpty(subscriptionId))
+{
+    Console.WriteLine("Error: Azure Subscription ID is required. Set AZURE_SUBSCRIPTION_ID environment variable or use the subscription-id input.");
+    return;
+}
+
+Console.WriteLine($"Azure Subscription ID: {subscriptionId}");
+Console.WriteLine($"Azure Location: {location}");
+
 try
 {
     var eventJson = File.ReadAllText(eventPath);
@@ -72,24 +87,59 @@ try
     
     // Filter extensions and save result
     var changed = files.Select(f => f.FileName)
-        .Where(f => f.EndsWith(".bicep"))
+        .Where(f => f.EndsWith(".bicep") || f.EndsWith(".json"))
+        .Where(f => !f.Contains("/.github/") && !f.Contains("/node_modules/"))
         .ToList();
     
     Console.WriteLine($"Found {changed.Count} IaC files in PR.");
     
-    Console.WriteLine($"\nFiltered .bicep files ({changed.Count}):");
-    foreach (var bicepFile in changed)
+    Console.WriteLine($"\nFiltered IaC files ({changed.Count}):");
+    foreach (var iacFile in changed)
     {
-        Console.WriteLine($"- {bicepFile}");
+        Console.WriteLine($"- {iacFile}");
     }
     
+    if (!changed.Any())
+    {
+        Console.WriteLine("No IaC files found in this PR. Skipping cost estimation.");
+        var emptyCost = new List<CostItem>();
+        var emptyOpts = new JsonSerializerOptions { WriteIndented = true };
+        await File.WriteAllTextAsync("cost.json", JsonSerializer.Serialize(emptyCost, emptyOpts));
+        return;
+    }
+
     // Estimate costs using ACE
+    Console.WriteLine("\n=== Starting Azure Cost Estimation ===");
+    var cost = await AceWrapper.EstimateAsync(changed, subscriptionId, location);
+    
     var opts = new JsonSerializerOptions { WriteIndented = true };
-    var cost = await AceWrapper.EstimateAsync(changed);
     await File.WriteAllTextAsync("cost.json", JsonSerializer.Serialize(cost, opts));
+    
+    Console.WriteLine($"\n=== Cost Estimation Complete ===");
     Console.WriteLine($"Estimated cost for {cost.Count} resources");
+    
+    if (cost.Any())
+    {
+        var totalCost = cost.Sum(c => c.EurosPerMonth);
+        Console.WriteLine($"Total estimated monthly cost: €{totalCost:F2}");
+        
+        Console.WriteLine("\nTop 5 most expensive resources:");
+        foreach (var item in cost.OrderByDescending(c => c.EurosPerMonth).Take(5))
+        {
+            Console.WriteLine($"  - {item.Service} ({item.Sku}): €{item.EurosPerMonth:F2}/month");
+        }
+    }
+    else
+    {
+        Console.WriteLine("No resources found for cost estimation.");
+    }
 }
 catch (Exception ex)
 {
     Console.WriteLine($"Error: {ex.Message}");
+    if (ex.StackTrace != null)
+    {
+        Console.WriteLine($"Stack trace: {ex.StackTrace}");
+    }
+    Environment.Exit(1);
 }
