@@ -24,4 +24,5 @@ RUN echo "=== Checking executable permissions ===" && ls -la ./AzCostguard.Runne
 RUN echo "=== Testing app startup ===" && ./AzCostguard.Runner --help || echo "App test failed but continuing..."
 COPY --from=build /app/ace/ ./ace/
 ENV PATH="$PATH:/app/ace"
-ENTRYPOINT ["./AzCostguard.Runner"] 
+RUN echo "=== Final check before entrypoint ===" && pwd && ls -la && echo "=== Checking if /app/AzCostguard.Runner exists ===" && ls -la /app/AzCostguard.Runner
+ENTRYPOINT ["/app/AzCostguard.Runner"] 
