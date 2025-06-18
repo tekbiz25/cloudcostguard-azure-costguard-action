@@ -82,6 +82,12 @@ try
     {
         Console.WriteLine($"- {bicepFile}");
     }
+    
+    // Estimate costs using ACE
+    var opts = new JsonSerializerOptions { WriteIndented = true };
+    var cost = await AceWrapper.EstimateAsync(changed);
+    await File.WriteAllTextAsync("cost.json", JsonSerializer.Serialize(cost, opts));
+    Console.WriteLine($"Estimated cost for {cost.Count} resources");
 }
 catch (Exception ex)
 {
