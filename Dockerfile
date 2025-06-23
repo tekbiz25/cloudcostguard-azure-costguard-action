@@ -1,12 +1,25 @@
-# Stage 1: build
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY action/src/AzCostguard.Runner/ ./AzCostguard.Runner/
-RUN dotnet publish AzCostguard.Runner/AzCostguard.Runner.csproj -c Release -o /app/publish
+# copy runner
+COPY action/src/AzCostguard.Runner/ ./runner/
+RUN dotnet publish runner -c Release -o /app/runner
+# build ACE
+COPY action/src/third_party/ace /src/ace
+RUN dotnet publish /src/ace/ace/azure-cost-estimator.csproj -c Release -o /app/ace
 
-# Stage 2: runtime
-FROM mcr.microsoft.com/dotnet/runtime:8.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
-COPY --from=build /app/publish .
-# Ensure we're in the correct directory regardless of external working directory overrides
-ENTRYPOINT ["sh", "-c", "cd /app && dotnet AzCostguard.Runner.dll \"$@\"", "--"] 
+
+# Install Bicep CLI
+RUN apt-get update && apt-get install -y curl && \
+    curl -Lo bicep https://github.com/Azure/bicep/releases/latest/download/bicep-linux-x64 && \
+    chmod +x ./bicep && mv ./bicep /usr/local/bin/bicep && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /app/runner/ ./
+COPY --from=build /app/ace/ ./ace/
+# Copy mocked data files for MVP mode
+COPY mocked-retail-prices.json /app/mocked-retail-prices.json
+COPY mocked-whatif-response.json /app/mocked-whatif-response.json
+ENV PATH="$PATH:/app/ace"
+ENTRYPOINT ["/app/AzCostguard.Runner"] 
