@@ -7,13 +7,20 @@
         "apiVersion": "2023-01-01",
         "type": "Microsoft.Storage/storageAccounts",
         "name": "teststorageaccount",
-        "location": "East US",
+        "location": "eastus",
         "sku": {
           "name": "Standard_LRS"
         },
         "kind": "StorageV2",
         "properties": {
-          "accessTier": "Hot"
+          "accessTier": "Hot",
+          "usage": {
+            "dataStored": "100",
+            "transactions": "10000"
+          }
+        },
+        "estimatedCost": {
+          "monthlyUSD": 5.0
         }
       }
     },
@@ -24,7 +31,7 @@
         "apiVersion": "2023-01-01",
         "type": "Microsoft.Web/serverfarms",
         "name": "test-app-plan",
-        "location": "East US",
+        "location": "eastus",
         "sku": {
           "name": "B1",
           "tier": "Basic",
@@ -34,6 +41,9 @@
         },
         "properties": {
           "reserved": false
+        },
+        "estimatedCost": {
+          "monthlyUSD": 13.14
         }
       }
     },
@@ -44,7 +54,7 @@
         "apiVersion": "2023-01-01",
         "type": "Microsoft.Web/sites",
         "name": "test-web-app",
-        "location": "East US",
+        "location": "eastus",
         "properties": {
           "serverFarmId": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/test-rg/providers/Microsoft.Web/serverfarms/test-app-plan",
           "httpsOnly": true,
@@ -52,6 +62,9 @@
             "minTlsVersion": "1.2",
             "ftpsState": "FtpsOnly"
           }
+        },
+        "estimatedCost": {
+          "monthlyUSD": 0.0
         }
       }
     }
