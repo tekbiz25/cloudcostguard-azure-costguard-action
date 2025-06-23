@@ -16,6 +16,9 @@ jobs:
       - name: Run AzureCostGuard Action
         uses: ./ # local action
         with:
-          diff-path: 'dummy.json'
+          location: 'eastus'
+          deep-scan: 'false'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # MVP mode uses a default subscription ID for catalog pricing
+          AZURE_SUBSCRIPTION_ID: '00000000-0000-0000-0000-000000000000' 
