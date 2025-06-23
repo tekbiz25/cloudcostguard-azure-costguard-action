@@ -35,13 +35,13 @@ public static class AceWrapper
                 string arguments;
                 if (deepScan)
                 {
-                    // Enhanced mode: Use standard 'estimate' command with What-If
-                    arguments = $"estimate --file \"{file}\" --sub {subscriptionId} --location {location} --format json";
+                    // Enhanced mode: Use standard command with What-If
+                    arguments = $"sub \"{file}\" {subscriptionId} {location} --generate-json-output --stdout";
                 }
                 else
                 {
-                    // MVP mode: Use 'sub' command with fictitious subscription to force diff-only
-                    arguments = $"sub \"{file}\" {subscriptionId} {location} --generate-json-output --stdout";
+                    // MVP mode: Use mocked retail API to avoid Azure authentication
+                    arguments = $"sub \"{file}\" {subscriptionId} {location} --generate-json-output --stdout --mocked-retail-api-response-path \"/app/mocked-retail-prices.json\"";
                 }
                 
                 // Add Terraform executable option if specified and file is a Terraform file
