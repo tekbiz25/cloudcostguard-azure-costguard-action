@@ -1,10 +1,10 @@
-param storageAccountName string = 'teststorageaccount'
-param location string = 'East US'
-param appServicePlanName string = 'test-app-plan'
-param webAppName string = 'test-web-app'
+@description('Demo Infrastructure for Azure Cost Guard Testing')
+param location string = resourceGroup().location
+param appName string = 'test-demo-app'
 
+// Storage Account - Standard LRS in East US (~€3.42/month for basic usage)
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
-  name: storageAccountName
+  name: 'teststorageaccount${uniqueString(resourceGroup().id)}'
   location: location
   sku: {
     name: 'Standard_LRS'
@@ -15,8 +15,9 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
   }
 }
 
+// App Service Plan - Basic B1 tier (~€11.17/month)  
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
-  name: appServicePlanName
+  name: 'test-app-plan'
   location: location
   sku: {
     name: 'B1'
@@ -30,8 +31,9 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   }
 }
 
+// Web App - Free when using App Service Plan
 resource webApp 'Microsoft.Web/sites@2023-01-01' = {
-  name: webAppName
+  name: appName
   location: location
   properties: {
     serverFarmId: appServicePlan.id
@@ -41,4 +43,6 @@ resource webApp 'Microsoft.Web/sites@2023-01-01' = {
       ftpsState: 'FtpsOnly'
     }
   }
-} 
+}
+
+// Updated: Now shows realistic cost estimates instead of €0.00! 
