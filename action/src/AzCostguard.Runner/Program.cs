@@ -103,10 +103,12 @@ try
         Console.WriteLine($"- {file.FileName} ({file.Status})");
     }
     
-    // Filter extensions and save result
+    // Filter for Infrastructure as Code files with improved filtering
     var changed = files.Select(f => f.FileName)
-        .Where(f => f.EndsWith(".bicep") || f.EndsWith(".json") || f.EndsWith(".tf"))
+        .Where(f => f.EndsWith(".bicep") || f.EndsWith(".tf") || IsArmTemplate(f))
         .Where(f => !f.Contains("/.github/") && !f.Contains("/node_modules/") && !f.Contains("/.terraform/"))
+        .Where(f => !f.Contains("/bin/") && !f.Contains("/obj/") && !f.Contains("/Debug/") && !f.Contains("/Release/"))
+        .Where(f => !f.StartsWith("mocked-") && !f.Contains(".sourcelink.json") && !f.Contains(".pdb"))
         .ToList();
     
     Console.WriteLine($"Found {changed.Count} IaC files in PR.");
@@ -162,4 +164,20 @@ catch (Exception ex)
         Console.WriteLine($"Stack trace: {ex.StackTrace}");
     }
     Environment.Exit(1);
+}
+
+// Helper function to identify ARM template JSON files
+static bool IsArmTemplate(string filename)
+{
+    if (!filename.EndsWith(".json")) return false;
+    
+    // Include common ARM template patterns
+    var armPatterns = new[] { "template", "azuredeploy", "mainTemplate", "nested", "linked" };
+    var lowerFilename = Path.GetFileNameWithoutExtension(filename).ToLower();
+    
+    return armPatterns.Any(pattern => lowerFilename.Contains(pattern)) ||
+           filename.Contains("/templates/") ||
+           filename.Contains("/arm/") ||
+           filename.Contains("/bicep/") ||
+           filename.Contains("/infrastructure/");
 }

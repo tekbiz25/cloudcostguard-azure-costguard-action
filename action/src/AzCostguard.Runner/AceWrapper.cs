@@ -108,6 +108,10 @@ public static class AceWrapper
                     continue;
                 }
 
+                // Debug: Print the raw output to understand parsing issues
+                Console.WriteLine($"Raw ACE output for {file}: {output}");
+                Console.WriteLine($"Output length: {output.Length} characters");
+
                 var doc = JsonDocument.Parse(output);
                 if (doc.RootElement.TryGetProperty("resources", out var resourcesProperty))
                 {
@@ -131,6 +135,7 @@ public static class AceWrapper
             catch (JsonException ex)
             {
                 Console.WriteLine($"Failed to parse JSON output for {file}: {ex.Message}");
+                // Don't continue here so we can see what the issue is
             }
             catch (Exception ex)
             {
