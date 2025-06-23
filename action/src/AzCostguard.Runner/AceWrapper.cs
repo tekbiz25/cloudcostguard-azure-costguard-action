@@ -40,8 +40,8 @@ public static class AceWrapper
                 }
                 else
                 {
-                    // MVP mode: Use mocked retail API to avoid Azure authentication
-                    arguments = $"sub \"{file}\" {subscriptionId} {location} --generate-json-output --stdout --mocked-retail-api-response-path \"/app/mocked-retail-prices.json\"";
+                    // MVP mode: Use mocked responses to avoid Azure authentication completely
+                    arguments = $"sub \"{file}\" {subscriptionId} {location} --generate-json-output --stdout --mocked-retail-api-response-path \"/app/mocked-retail-prices.json\" --what-if-file \"/app/mocked-whatif-response.json\"";
                 }
                 
                 // Add Terraform executable option if specified and file is a Terraform file

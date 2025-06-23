@@ -1,0 +1,59 @@
+{
+  "changes": [
+    {
+      "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/test-rg/providers/Microsoft.Storage/storageAccounts/teststorageaccount",
+      "changeType": "Create",
+      "after": {
+        "apiVersion": "2023-01-01",
+        "type": "Microsoft.Storage/storageAccounts",
+        "name": "teststorageaccount",
+        "location": "East US",
+        "sku": {
+          "name": "Standard_LRS"
+        },
+        "kind": "StorageV2",
+        "properties": {
+          "accessTier": "Hot"
+        }
+      }
+    },
+    {
+      "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/test-rg/providers/Microsoft.Web/serverfarms/test-app-plan",
+      "changeType": "Create",
+      "after": {
+        "apiVersion": "2023-01-01",
+        "type": "Microsoft.Web/serverfarms",
+        "name": "test-app-plan",
+        "location": "East US",
+        "sku": {
+          "name": "B1",
+          "tier": "Basic",
+          "size": "B1",
+          "family": "B",
+          "capacity": 1
+        },
+        "properties": {
+          "reserved": false
+        }
+      }
+    },
+    {
+      "resourceId": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/test-rg/providers/Microsoft.Web/sites/test-web-app",
+      "changeType": "Create",
+      "after": {
+        "apiVersion": "2023-01-01",
+        "type": "Microsoft.Web/sites",
+        "name": "test-web-app",
+        "location": "East US",
+        "properties": {
+          "serverFarmId": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/test-rg/providers/Microsoft.Web/serverfarms/test-app-plan",
+          "httpsOnly": true,
+          "siteConfig": {
+            "minTlsVersion": "1.2",
+            "ftpsState": "FtpsOnly"
+          }
+        }
+      }
+    }
+  ]
+} 

@@ -18,7 +18,8 @@ RUN apt-get update && apt-get install -y curl && \
 
 COPY --from=build /app/runner/ ./
 COPY --from=build /app/ace/ ./ace/
-# Copy mocked retail prices for MVP mode
+# Copy mocked data files for MVP mode
 COPY mocked-retail-prices.json /app/mocked-retail-prices.json
+COPY mocked-whatif-response.json /app/mocked-whatif-response.json
 ENV PATH="$PATH:/app/ace"
 ENTRYPOINT ["/app/AzCostguard.Runner"] 
