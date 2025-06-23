@@ -36,12 +36,12 @@ public static class AceWrapper
                 if (deepScan)
                 {
                     // Enhanced mode: Use standard command with What-If
-                    arguments = $"sub \"{file}\" {subscriptionId} {location} --generate-json-output --stdout";
+                    arguments = $"sub \"{file}\" {subscriptionId} {location} --generate-json-output --stdout --silent";
                 }
                 else
                 {
                     // MVP mode: Use mocked responses to avoid Azure authentication completely
-                    arguments = $"sub \"{file}\" {subscriptionId} {location} --generate-json-output --stdout --mocked-retail-api-response-path \"/app/mocked-retail-prices.json\" --what-if-file \"/app/mocked-whatif-response.json\"";
+                    arguments = $"sub \"{file}\" {subscriptionId} {location} --generate-json-output --stdout --silent --mocked-retail-api-response-path \"/app/mocked-retail-prices.json\" --what-if-file \"/app/mocked-whatif-response.json\"";
                 }
                 
                 // Add Terraform executable option if specified and file is a Terraform file
@@ -113,15 +113,15 @@ public static class AceWrapper
                 Console.WriteLine($"Output length: {output.Length} characters");
 
                 var doc = JsonDocument.Parse(output);
-                if (doc.RootElement.TryGetProperty("resources", out var resourcesProperty))
+                if (doc.RootElement.TryGetProperty("Resources", out var resourcesProperty))
                 {
                     var fileResults = resourcesProperty.EnumerateArray()
                         .Select(x => new CostItem
                         {
-                            ResourceId = x.GetProperty("id").GetString() ?? "",
-                            Service = x.GetProperty("serviceName").GetString() ?? "",
-                            Sku = x.GetProperty("skuName").GetString() ?? "",
-                            EurosPerMonth = x.GetProperty("monthlyCostEUR").GetDecimal()
+                            ResourceId = x.GetProperty("Id").GetString() ?? "",
+                            Service = ExtractServiceName(x.GetProperty("Id").GetString() ?? ""),
+                            Sku = "Standard", // Will be enhanced later with actual SKU detection
+                            EurosPerMonth = x.GetProperty("TotalCost").GetProperty("OriginalValue").GetDecimal() * 0.85m // Rough USD to EUR conversion
                         });
                     
                     results.AddRange(fileResults);
@@ -144,6 +144,26 @@ public static class AceWrapper
         }
         
         return results;
+    }
+
+    private static string ExtractServiceName(string resourceId)
+    {
+        try
+        {
+            // Extract service name from resource ID like "/subscriptions/.../providers/Microsoft.Storage/storageAccounts/..."
+            var parts = resourceId.Split('/');
+            var providerIndex = Array.IndexOf(parts, "providers");
+            if (providerIndex >= 0 && providerIndex + 1 < parts.Length)
+            {
+                var provider = parts[providerIndex + 1];
+                return provider.Replace("Microsoft.", "");
+            }
+        }
+        catch
+        {
+            // Fallback if parsing fails
+        }
+        return "Unknown";
     }
 
     private static void ValidateAzureAuthentication()
